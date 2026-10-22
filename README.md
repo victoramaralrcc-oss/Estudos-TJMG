@@ -1,2 +1,2 @@
-# Estudos-TJMG
+# Estudos-TJSP
 Edical verticalizado Interativo Escrevente TJSP
