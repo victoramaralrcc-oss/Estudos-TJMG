@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TJSP — Escrevente Técnico (Edital Nº 02/2026)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        tjsp: {
+                            bordo: '#6e111a',
+                            bordoDark: '#4a0b11',
+                            black: '#1a1a1a',
+                            gray: '#333333',
+                            light: '#f4f4f5'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f4f4f5; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #e4e4e7; }
+        ::-webkit-scrollbar-thumb { background: #6e111a; border-radius: 4px; }
+        .summary-box { transition: all 0.3s ease; overflow: hidden; }
+        .hidden-summary { max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; margin-top: 0; border: none; }
+        .visible-summary { max-height: 500px; opacity: 1; padding: 1rem; margin-top: 0.5rem; border-top: 1px dashed #d4d4d8; }
+    </style>
+</head>
+<body class="text-tjsp-black antialiased flex flex-col min-h-screen">
+
+    <!-- CABEÇALHO -->
+    <header class="bg-tjsp-bordo text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-scale-balanced text-3xl"></i>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight">TJSP — ESCREVENTE TÉCNICO JUDICIÁRIO (EDITAL Nº 02/2026)</h1>
+                    <p class="text-sm opacity-80" id="header-date"></p>
+                </div>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row items-center gap-4">
+                <div class="bg-tjsp-bordoDark px-4 py-2 rounded-lg border border-white/10 text-center shadow-inner">
+                    <span class="block text-xs font-semibold text-gray-300 uppercase tracking-wider">Faltam</span>
+                    <span class="text-xl font-bold" id="countdown">0 dias</span>
+                </div>
+                <button onclick="openExportModal()" class="bg-white text-tjsp-bordo hover:bg-gray-100 px-4 py-2 rounded-lg font-bold text-sm transition shadow flex items-center gap-2">
+                    <i class="fa-solid fa-file-export"></i> Gerar Revisão de Véspera
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-6">
+        
+        <!-- PAINÉIS DE EVOLUÇÃO & CRONÔMETRO -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- Cards de Métricas (Ocupam 3 colunas em telas grandes) -->
+            <div class="lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <!-- Progresso Teoria -->
+                <div class="bg-white rounded-xl shadow p-5 border-l-4 border-blue-500">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Progresso Teoria</h3>
+                        <i class="fa-solid fa-book-open text-blue-500 opacity-50 text-xl"></i>
+                    </div>
+                    <div class="flex items-end gap-2 mb-2">
+                        <span class="text-3xl font-bold text-tjsp-black" id="metric-theory-pct">0%</span>
+                        <span class="text-sm font-medium text-gray-400 mb-1" id="metric-theory-count">0/0</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-blue-500 h-2 rounded-full transition-all duration-500" id="metric-theory-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Leitura Lei Seca -->
+                <div class="bg-white rounded-xl shadow p-5 border-l-4 border-green-500">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Leitura de Lei Seca</h3>
+                        <i class="fa-solid fa-gavel text-green-500 opacity-50 text-xl"></i>
+                    </div>
+                    <div class="flex items-end gap-2 mb-2">
+                        <span class="text-3xl font-bold text-tjsp-black" id="metric-law-pct">0%</span>
+                        <span class="text-sm font-medium text-gray-400 mb-1" id="metric-law-count">0/0</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-green-500 h-2 rounded-full transition-all duration-500" id="metric-law-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Questões Resolvidas -->
+                <div class="bg-white rounded-xl shadow p-5 border-l-4 border-amber-500">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Questões Resolvidas</h3>
+                        <i class="fa-solid fa-check-double text-amber-500 opacity-50 text-xl"></i>
+                    </div>
+                    <div class="flex items-end gap-2 mt-4">
+                        <span class="text-4xl font-black text-tjsp-black" id="metric-questions">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cronômetro -->
+            <div class="lg:col-span-1 bg-white rounded-xl shadow p-5 flex flex-col justify-center border border-gray-200">
+                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center justify-center"><i class="fa-solid fa-stopwatch mr-1"></i> Foco de Estudo</h3>
+                
+                <select id="sw-subject" onchange="updateStopwatchTip()" class="w-full mb-2 p-2 border border-gray-300 rounded text-sm outline-none focus:ring-1 focus:ring-tjsp-bordo">
+                    <option value="" disabled selected>Selecione a disciplina...</option>
+                    <option value="proc_civil">Processo Civil</option>
+                    <option value="proc_penal">Processo Penal</option>
+                    <option value="penal">Direito Penal</option>
+                    <option value="const">Direito Constitucional</option>
+                    <option value="admin">Direito Administrativo</option>
+                    <option value="epd">Estatuto da Pessoa com Def.</option>
+                    <option value="leg_esp">Legislação / Corregedoria</option>
+                    <option value="port">Língua Portuguesa</option>
+                    <option value="info">Informática</option>
+                    <option value="rlm">Raciocínio Lógico e Matemática</option>
+                </select>
+                
+                <div id="sw-tip" class="text-[11px] text-gray-500 italic mb-4 text-center min-h-[32px] flex items-center justify-center">
+                    Selecione uma disciplina para ver a dica estratégica.
+                </div>
+
+                <div class="text-4xl font-black text-tjsp-bordo font-mono mb-4 text-center" id="stopwatch-display">00:00:00</div>
+                
+                <div class="flex gap-2 w-full mb-2">
+                    <button id="btn-sw-start" onclick="startStopwatch()" class="flex-1 bg-tjsp-bordo hover:bg-tjsp-bordoDark text-white py-2 rounded font-semibold transition text-sm">Iniciar</button>
+                    <button id="btn-sw-pause" onclick="pauseStopwatch()" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white py-2 rounded font-semibold transition text-sm hidden">Pausar</button>
+                    <button onclick="endStopwatch()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded font-semibold transition text-sm" title="Encerrar e Salvar">Encerrar</button>
+                </div>
+                
+                <div class="text-xs text-center text-gray-400 font-semibold" id="sw-accumulated">Tempo total: 0h 0m</div>
+            </div>
+        </div>
+
+        <!-- ACORDEÃO DO EDITAL -->
+        <div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden" id="accordion-container">
+            <!-- Gerado via JS -->
+        </div>
+
+    </main>
+
+    <!-- Modal de Exportação -->
+    <div id="export-modal" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-tjsp-light rounded-t-xl">
+                <h2 class="text-xl font-bold text-tjsp-bordo"><i class="fa-solid fa-book-bookmark mr-2"></i> Caderno de Véspera (Resumos)</h2>
+                <button onclick="closeExportModal()" class="text-gray-400 hover:text-red-500 text-2xl leading-none">&times;</button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 font-serif text-gray-800" id="export-content">
+                <!-- Conteúdo gerado -->
+            </div>
+            <div class="px-6 py-4 border-t bg-gray-50 flex justify-end gap-3 rounded-b-xl">
+                <button onclick="closeExportModal()" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded font-semibold text-sm">Fechar</button>
+                <button onclick="window.print()" class="px-4 py-2 bg-tjsp-bordo text-white hover:bg-tjsp-bordoDark rounded font-semibold text-sm"><i class="fa-solid fa-print mr-2"></i>Imprimir</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === DADOS DO EDITAL ===
+        const TARGET_DATE = new Date('2027-03-14T00:00:00');
+        const STORAGE_KEY = 'tjsp_dashboard_data_v2';
+
+        const subjects = [
+            {
+                id: 'proc_civil', title: 'Direito Processual Civil', type: 'law',
+                items: [
+                    "Aula 00: Check-in 1 – Arts. 144 a 155 (Juiz e Auxiliares)",
+                    "Aula 01: Check-in 2 – Arts. 188 a 235 (Atos Processuais: Forma, Tempo e Prazos)",
+                    "Aula 02: Check-in 3 – Arts. 236 a 275 (Comunicação dos Atos Processuais: Citação e Intimação)",
+                    "Aula 03: Check-in 4 – Arts. 294 a 311 (Tutela Provisória)",
+                    "Aula 04: Check-in 5 – Arts. 318 a 357 (Procedimento Comum: Pet. Inicial, Contestação e Preliminares)",
+                    "Aula 05: Check-in 6 – Arts. 358 a 421 (Provas - Parte I: Disposições Gerais a Depoimento/Testemunhal)",
+                    "Aula 06: Check-in 7 – Arts. 422 a 484 (Provas - Parte II: Pericial e Inspeção Judicial)",
+                    "Aula 07: Check-in 8 – Arts. 485 a 538 (Sentença, Coisa Julgada e Cumprimento de Sentença)",
+                    "Aula 08: Check-in 9 – Arts. 994 a 1.014 (Recursos: Teoria Geral e Apelação)",
+                    "Aula 08: Check-in 10 – Arts. 1.015 a 1.026 (Recursos: Agravos e Embargos)",
+                    "Aula 09: Check-in 11 – Lei 9.099/95 (arts. 3º a 19) e Lei 12.153/2009"
+                ]
+            },
+            {
+                id: 'proc_penal', title: 'Direito Processual Penal', type: 'law',
+                items: [
+                    "Aula 00: Check-in 1 – Sujeitos Processuais (Juiz, MP, Acusado, Defensor, etc.)",
+                    "Aula 01: Check-in 2 – Citações e Intimações",
+                    "Aula 02: Check-in 3 – Processo Comum e Restauração de Autos Extraviados",
+                    "Aula 03: Check-in 4 – Tribunal do Júri (1ª Fase: Acusação e Pronúncia)",
+                    "Aula 03: Check-in 5 – Tribunal do Júri (2ª Fase: Plenário e Julgamento)",
+                    "Aula 04: Check-in 6 – Recursos (Teoria Geral e Recurso em Sentido Estrito)",
+                    "Aula 04: Check-in 7 – Recursos (Apelação, Embargos e demais)",
+                    "Aula 05: Check-in 8 – Habeas Corpus",
+                    "Aula 06: Check-in 9 – Juizados Especiais Criminais"
+                ]
+            },
+            {
+                id: 'penal', title: 'Direito Penal', type: 'law',
+                items: [
+                    "Aula 00: Check-in 1 – Crimes contra a Fé Pública (Arts. 293 a 305; 307; 308; 311-A)",
+                    "Aula 01: Check-in 2 – Crimes Praticados por Funcionário Público (Arts. 312 a 317; 319 a 327)",
+                    "Aula 02: Check-in 3 – Crimes Praticados por Particular (Arts. 328 a 333; 336 e 337)",
+                    "Aula 03: Check-in 4 – Crimes contra a Administração da Justiça (Arts. 339 a 347; 357 e 359)"
+                ]
+            },
+            {
+                id: 'const', title: 'Direito Constitucional', type: 'law',
+                items: [
+                    "Aula 00: Check-in 1 – Teoria Geral dos Direitos Fundamentais",
+                    "Aula 01: Check-in 2 – Direitos e Deveres Ind. e Coletivos (Parte I - Art. 5º)",
+                    "Aula 02: Check-in 3 – Direitos e Deveres Ind. e Coletivos (Parte II - Art. 5º)",
+                    "Aula 03: Check-in 4 – Direitos Sociais",
+                    "Aula 04: Check-in 5 – Nacionalidade",
+                    "Aula 05: Check-in 6 – Administração Pública",
+                    "Aula 06: Check-in 7 – Poder Judiciário (Art. 92)"
+                ]
+            },
+            {
+                id: 'admin', title: 'Direito Administrativo', type: 'law',
+                items: [
+                    "Check-in 1: Estatuto (Provimento, Exercício, Vacância e Direitos) – Arts. 1º a 86",
+                    "Check-in 2: Estatuto (Férias e Licenças) – Arts. 171 a 175; 239 a 250",
+                    "Check-in 3: Estatuto (Deveres, Proibições, Responsabilidade e Penalidades) – Arts. 251 a 263",
+                    "Check-in 4: Estatuto (Processo Administrativo e Sindicância) – Arts. 264 a 323",
+                    "Check-in 5: Lei de Improbidade Administrativa (Lei 8.429/92)"
+                ]
+            },
+            {
+                id: 'epd', title: 'Estatuto da Pessoa com Deficiência', type: 'law',
+                items: [
+                    "Check-in 1: Disposições Gerais e Direitos Fundamentais (Arts. 1º a 13; 34 a 38)",
+                    "Check-in 2: Acessibilidade e Disposições Finais (Arts. 88 a 91)"
+                ]
+            },
+            {
+                id: 'leg_esp', title: 'Legislação Especial', type: 'law',
+                items: [
+                    "Aula 00: Check-in 1 – Noções gerais sobre o Poder Judiciário e Funções Essenciais",
+                    "Aula 01: Check-in 2 – Normas Corregedoria: Ofícios, Atribuições e Sistema",
+                    "Aula 02: Check-in 3 – Normas Corregedoria: Livros, Classificadores e Escrituração",
+                    "Aula 03: Check-in 4 – Normas Corregedoria: Autuação, Volumes e Numeração",
+                    "Aula 04: Check-in 5 – Normas Corregedoria: Função Correicional",
+                    "Aula 05: Check-in 6 – Normas Corregedoria: Comunicações, Cartas e Intimações",
+                    "Aula 06: Check-in 7 – Normas Corregedoria: Consulta/Carga e Arquivamento",
+                    "Aula 07: Check-in 8 – Normas Corregedoria: Processo Eletrônico (Parte I)",
+                    "Aula 08: Check-in 9 – Normas Corregedoria: Processo Eletrônico (Parte II)",
+                    "Aula 09: Check-in 10 – Resolução TJSP nº 850/2021",
+                    "Aula 10: Check-in 11 – Resolução TJSP nº 963/2025",
+                    "Aula 11: Check-in 12 – Lei Complementar nº 1.111/2010",
+                    "Aula 12: Check-in 13 – Regimento Interno: Organização",
+                    "Aula 13: Check-in 14 – Regimento Interno: Da Competência (Parte I)",
+                    "Aula 14: Check-in 15 – Regimento Interno: Da Competência (Parte II)"
+                ]
+            },
+            {
+                id: 'info', title: 'Informática', type: 'general',
+                items: [
+                    "Check-in 1: Aula 00 – Internet: navegação, URL, links, impressão de páginas",
+                    "Check-in 2: Aula 01 – Internet: busca",
+                    "Check-in 3: Aula 02 – Correio Eletrônico: preparo, envio, anexação",
+                    "Check-in 4: Aula 03 – MS-Excel: planilhas, fórmulas, funções, gráficos",
+                    "Check-in 5: Aula 04 – MS-Word: edição, formatação, cabeçalhos, parágrafos",
+                    "Check-in 6: Aula 05 – MS-Windows 10: pastas, diretórios, atalhos, área de trabalho",
+                    "Check-in 7: Aula 06 – MS-Windows 11",
+                    "Check-in 8: Aula 07 – MS Teams e OneDrive: chats, reuniões, armazenamento"
+                ]
+            },
+            {
+                id: 'rlm', title: 'Raciocínio Lógico e Matemática', type: 'general',
+                items: [
+                    "Check-in 1: Aula 00 – Estruturas Lógicas I",
+                    "Check-in 2: Aula 01 – Estruturas Lógicas II",
+                    "Check-in 3: Aula 02 – Equivalências Lógicas",
+                    "Check-in 4: Aula 03 – Diagramas Lógicos",
+                    "Check-in 5: Aula 04 – Lógica de Argumentação",
+                    "Check-in 6: Aula 05 e 06 – Raciocínio Sequencial e Princípio da Casa dos Pombos",
+                    "Check-in 7: Aula 07 e 08 – Problemas de Lógica e Teoria dos Conjuntos",
+                    "Check-in 8: Aula 09 – Operações Básicas, Potenciação e Radiciação",
+                    "Check-in 9: Aula 10 e 11 – Sistemas de Medidas, Múltiplos e Divisores (MMC e MDC)",
+                    "Check-in 10: Aula 12 – Frações, Razão e Proporção",
+                    "Check-in 11: Aula 13 – Regra de Três Simples e Composta",
+                    "Check-in 12: Aula 14 e 15 – Porcentagem e Juros Simples",
+                    "Check-in 13: Aula 16 – Equações e Sistemas",
+                    "Check-in 14: Aula 17 – Geometria Plana (Áreas e Perímetros)",
+                    "Check-in 15: Aula 18 – Geometria Espacial (Volumes)",
+                    "Check-in 16: Aula 19 e 20 – Relações entre Grandezas e Média Aritmética"
+                ]
+            },
+            {
+                id: 'port', title: 'Língua Portuguesa', type: 'special' // Custom UI
+            }
+        ];
+
+        // === ESTADO GLOBAL ===
+        let appData = {
+            checklist: {}, // { subId: { itemIndex: { t: bool, l: bool, q: int, s: string } } }
+            portuguese: [], // [{ id, date, time, correct, wrong, diag }]
+            openAccordions: {}, // { subId: bool }
+            timeSpent: {} // { subId: seconds }
+        };
+
+        // === INICIALIZAÇÃO ===
+        function initApp() {
+            setupDates();
+            loadData();
+            renderAccordion();
+            updateMetrics();
+            updateStopwatchTip();
+        }
+
+        function setupDates() {
+            const now = new Date();
+            const diffTime = TARGET_DATE - now;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            document.getElementById('countdown').textContent = `${diffDays > 0 ? diffDays : 0} dias`;
+            
+            document.getElementById('header-date').textContent = "Data da Prova: 14 de março de 2027";
+        }
+
+        // === ARMAZENAMENTO ===
+        function loadData() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                appData = JSON.parse(saved);
+            } else {
+                // Pre-populate checklist structure
+                subjects.forEach(sub => {
+                    if (sub.type !== 'special') {
+                        appData.checklist[sub.id] = {};
+                        sub.items.forEach((_, idx) => {
+                            appData.checklist[sub.id][idx] = { t: false, l: false, q: 0, s: "" };
+                        });
+                    }
+                    if (appData.openAccordions[sub.id] === undefined) {
+                        appData.openAccordions[sub.id] = false;
+                    }
+                    if (appData.timeSpent[sub.id] === undefined) {
+                        appData.timeSpent[sub.id] = 0;
+                    }
+                });
+            }
+            if (!appData.portuguese) appData.portuguese = [];
+            if (!appData.timeSpent) appData.timeSpent = {};
+        }
+
+        function saveData() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+            updateMetrics();
+        }
+
+        // === RENDERIZAÇÃO ===
+        function renderAccordion() {
+            const container = document.getElementById('accordion-container');
+            container.innerHTML = '';
+
+            subjects.forEach(sub => {
+                const isOpen = appData.openAccordions[sub.id];
+                const header = document.createElement('div');
+                header.className = `px-6 py-4 cursor-pointer flex justify-between items-center select-none border-b border-gray-100 transition-colors ${isOpen ? 'bg-tjsp-light border-l-4 border-l-tjsp-bordo' : 'hover:bg-gray-50 border-l-4 border-l-transparent'}`;
+                header.onclick = () => {
+                    appData.openAccordions[sub.id] = !appData.openAccordions[sub.id];
+                    saveData();
+                    renderAccordion();
+                };
+
+                // Cálculo de progresso local da matéria
+                let subProgHtml = '';
+                if (sub.type !== 'special') {
+                    const totalT = sub.items.length;
+                    const doneT = Object.values(appData.checklist[sub.id]).filter(v => v.t).length;
+                    const pct = Math.round((doneT / totalT) * 100) || 0;
+                    subProgHtml = `<span class="text-xs font-semibold px-2 py-1 rounded bg-gray-200 text-gray-700 ml-3">${pct}%</span>`;
+                }
+
+                header.innerHTML = `
+                    <div class="flex items-center">
+                        <h2 class="text-lg font-bold text-gray-800">${sub.title}</h2>
+                        ${subProgHtml}
+                    </div>
+                    <i class="fa-solid fa-chevron-${isOpen ? 'up' : 'down'} text-gray-400"></i>
+                `;
+                container.appendChild(header);
+
+                if (isOpen) {
+                    const content = document.createElement('div');
+                    content.className = "bg-white divide-y divide-gray-100";
+                    
+                    if (sub.type === 'special') {
+                        content.innerHTML = renderPortugueseModule();
+                    } else {
+                        content.appendChild(renderSubjectItems(sub));
+                    }
+                    container.appendChild(content);
+                    
+                    if(sub.type === 'special') attachPortugueseEvents();
+                }
+            });
+        }
+
+        function renderSubjectItems(sub) {
+            const wrapper = document.createElement('div');
+            
+            // Cabeçalho da tabela
+            const thead = document.createElement('div');
+            thead.className = "grid grid-cols-12 gap-2 px-6 py-2 bg-gray-50 text-xs font-bold text-gray-500 uppercase tracking-wider items-center hidden md:grid";
+            thead.innerHTML = `
+                <div class="${sub.type === 'law' ? 'col-span-6' : 'col-span-7'}">Tópico do Edital</div>
+                <div class="col-span-1 text-center">Teoria</div>
+                ${sub.type === 'law' ? '<div class="col-span-1 text-center">Lei Seca</div>' : ''}
+                <div class="col-span-2 text-center">Qtd. Questões</div>
+                <div class="col-span-2 text-right">Anotações</div>
+            `;
+            wrapper.appendChild(thead);
+
+            // Linhas
+            sub.items.forEach((itemText, idx) => {
+                const data = appData.checklist[sub.id][idx];
+                const row = document.createElement('div');
+                row.className = "px-6 py-4 flex flex-col md:grid md:grid-cols-12 md:gap-2 items-start md:items-center hover:bg-gray-50 transition-colors";
+                
+                const hasSummary = data.s && data.s.trim().length > 0;
+                const summaryId = `summary-${sub.id}-${idx}`;
+
+                row.innerHTML = `
+                    <div class="${sub.type === 'law' ? 'col-span-6' : 'col-span-7'} text-sm font-medium text-gray-700 mb-2 md:mb-0">${itemText}</div>
+                    
+                    <div class="col-span-1 flex items-center gap-2 md:justify-center w-full md:w-auto mb-2 md:mb-0">
+                        <span class="md:hidden text-xs text-gray-500 w-16">Teoria:</span>
+                        <input type="checkbox" ${data.t ? 'checked' : ''} onchange="updateChecklist('${sub.id}', ${idx}, 't', this.checked)" class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                    </div>
+
+                    ${sub.type === 'law' ? `
+                    <div class="col-span-1 flex items-center gap-2 md:justify-center w-full md:w-auto mb-2 md:mb-0">
+                        <span class="md:hidden text-xs text-gray-500 w-16">Lei Seca:</span>
+                        <input type="checkbox" ${data.l ? 'checked' : ''} onchange="updateChecklist('${sub.id}', ${idx}, 'l', this.checked)" class="w-5 h-5 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer">
+                    </div>` : ''}
+
+                    <div class="col-span-2 flex items-center gap-2 md:justify-center w-full md:w-auto mb-2 md:mb-0">
+                        <span class="md:hidden text-xs text-gray-500 w-16">Questões:</span>
+                        <input type="number" min="0" value="${data.q}" onchange="updateChecklist('${sub.id}', ${idx}, 'q', this.value)" class="w-16 px-2 py-1 text-center border border-gray-300 rounded focus:ring-1 focus:ring-tjsp-bordo outline-none text-sm">
+                    </div>
+
+                    <div class="col-span-2 flex items-center md:justify-end w-full md:w-auto mt-2 md:mt-0">
+                        <button onclick="toggleSummary('${summaryId}')" class="text-xs font-bold px-3 py-1.5 rounded ${hasSummary ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-transparent'} transition w-full md:w-auto">
+                            <i class="fa-solid fa-pen-to-square mr-1"></i> Resumo
+                        </button>
+                    </div>
+                `;
+                wrapper.appendChild(row);
+
+                // Caixa de resumo expansível
+                const summaryBox = document.createElement('div');
+                summaryBox.id = summaryId;
+                summaryBox.className = "summary-box hidden-summary bg-gray-50 px-6";
+                summaryBox.innerHTML = `
+                    <textarea onchange="updateChecklist('${sub.id}', ${idx}, 's', this.value)" class="w-full h-32 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tjsp-bordo outline-none text-sm font-serif" placeholder="Suas anotações, pegadinhas e mnemônicos sobre este tópico...">${data.s}</textarea>
+                `;
+                wrapper.appendChild(summaryBox);
+            });
+
+            return wrapper;
+        }
+
+        // Funções de atualização e UI
+        function updateChecklist(subId, idx, field, value) {
+            if (field === 'q') value = parseInt(value) || 0;
+            appData.checklist[subId][idx][field] = value;
+            saveData();
+            
+            // Se for resumo, re-renderizar botão (se ficou vazio ou não) mantendo o acordeão aberto.
+            if(field === 's') renderAccordion();
+        }
+
+        function toggleSummary(id) {
+            const el = document.getElementById(id);
+            if (el.classList.contains('hidden-summary')) {
+                el.classList.remove('hidden-summary');
+                el.classList.add('visible-summary');
+            } else {
+                el.classList.remove('visible-summary');
+                el.classList.add('hidden-summary');
+            }
+        }
+
+        function updateMetrics() {
+            let totalTheoryItems = 0;
+            let checkedTheoryItems = 0;
+            let totalLawItems = 0;
+            let checkedLawItems = 0;
+            let totalQuestions = 0;
+
+            subjects.forEach(sub => {
+                if (sub.type !== 'special') {
+                    totalTheoryItems += sub.items.length;
+                    if (sub.type === 'law') totalLawItems += sub.items.length;
+
+                    Object.values(appData.checklist[sub.id]).forEach(item => {
+                        if (item.t) checkedTheoryItems++;
+                        if (sub.type === 'law' && item.l) checkedLawItems++;
+                        totalQuestions += (item.q || 0);
+                    });
+                }
+            });
+
+            const theoryPct = totalTheoryItems ? Math.round((checkedTheoryItems / totalTheoryItems) * 100) : 0;
+            const lawPct = totalLawItems ? Math.round((checkedLawItems / totalLawItems) * 100) : 0;
+
+            document.getElementById('metric-theory-pct').textContent = `${theoryPct}%`;
+            document.getElementById('metric-theory-count').textContent = `${checkedTheoryItems}/${totalTheoryItems}`;
+            document.getElementById('metric-theory-bar').style.width = `${theoryPct}%`;
+
+            document.getElementById('metric-law-pct').textContent = `${lawPct}%`;
+            document.getElementById('metric-law-count').textContent = `${checkedLawItems}/${totalLawItems}`;
+            document.getElementById('metric-law-bar').style.width = `${lawPct}%`;
+
+            document.getElementById('metric-questions').textContent = totalQuestions;
+        }
+
+        // === MÓDULO DE PORTUGUÊS ===
+        function renderPortugueseModule() {
+            let html = `
+                <div class="p-6 bg-blue-50/50">
+                    <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4 border-b pb-2"><i class="fa-solid fa-file-circle-check mr-2"></i>Registrar Simulado Vunesp</h3>
+                    <form id="pt-form" class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                            <div><label class="block text-xs font-bold text-gray-600 mb-1">Data</label><input type="date" id="pt-date" required class="w-full px-3 py-2 border rounded focus:ring-1 outline-none text-sm"></div>
+                            <div><label class="block text-xs font-bold text-gray-600 mb-1">Tempo (min)</label><input type="number" id="pt-time" required class="w-full px-3 py-2 border rounded focus:ring-1 outline-none text-sm"></div>
+                            <div><label class="block text-xs font-bold text-green-600 mb-1">Acertos</label><input type="number" id="pt-correct" required class="w-full px-3 py-2 border rounded bg-green-50 focus:ring-1 outline-none text-sm"></div>
+                            <div><label class="block text-xs font-bold text-red-600 mb-1">Erros</label><input type="number" id="pt-wrong" required class="w-full px-3 py-2 border rounded bg-red-50 focus:ring-1 outline-none text-sm"></div>
+                        </div>
+                        <div><label class="block text-xs font-bold text-gray-600 mb-1">Diagnóstico IA / Mapeamento</label><textarea id="pt-diag" rows="2" class="w-full px-3 py-2 border rounded focus:ring-1 outline-none text-sm"></textarea></div>
+                        <div class="flex justify-end"><button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded font-bold text-sm shadow hover:bg-blue-700">Salvar Simulado</button></div>
+                    </form>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4"><i class="fa-solid fa-list-ul mr-2"></i>Histórico</h3>
+                    <div class="space-y-3">
+            `;
+            
+            if (appData.portuguese.length === 0) {
+                html += `<div class="text-sm text-gray-500 italic">Nenhum simulado registrado.</div>`;
+            } else {
+                [...appData.portuguese].reverse().forEach(ex => {
+                    const total = ex.correct + ex.wrong;
+                    const pct = total > 0 ? Math.round((ex.correct/total)*100) : 0;
+                    html += `
+                        <div class="border rounded-lg p-4 flex flex-col md:flex-row gap-4 justify-between bg-white relative group">
+                            <button type="button" onclick="deletePortuguese(${ex.id})" class="absolute top-2 right-2 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100"><i class="fa-solid fa-trash"></i></button>
+                            <div>
+                                <div class="text-xs text-gray-500 font-bold mb-1"><i class="fa-regular fa-calendar mr-1"></i> ${ex.date.split('-').reverse().join('/')} &nbsp;|&nbsp; <i class="fa-regular fa-clock mr-1"></i> ${ex.time} min</div>
+                                <div class="text-sm"><span class="font-bold text-green-600">${ex.correct} Acertos</span> / <span class="font-bold text-red-500">${ex.wrong} Erros</span> (Total: ${total})</div>
+                                ${ex.diag ? `<div class="mt-2 text-xs bg-gray-50 p-2 rounded border border-gray-100 text-gray-600 font-serif">${ex.diag}</div>` : ''}
+                            </div>
+                            <div class="flex flex-col items-center justify-center bg-gray-50 px-4 py-2 rounded border min-w-[80px]">
+                                <span class="text-xl font-black ${pct >= 80 ? 'text-green-600' : pct >= 60 ? 'text-amber-500' : 'text-red-500'}">${pct}%</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            html += `</div></div>`;
+            return html;
+        }
+
+        function attachPortugueseEvents() {
+            const form = document.getElementById('pt-form');
+            if (!form) return;
+            // set today
+            document.getElementById('pt-date').valueAsDate = new Date();
+            
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                appData.portuguese.push({
+                    id: Date.now(),
+                    date: document.getElementById('pt-date').value,
+                    time: parseInt(document.getElementById('pt-time').value) || 0,
+                    correct: parseInt(document.getElementById('pt-correct').value) || 0,
+                    wrong: parseInt(document.getElementById('pt-wrong').value) || 0,
+                    diag: document.getElementById('pt-diag').value
+                });
+                saveData();
+                renderAccordion(); // Re-render to show new history
+            });
+        }
+
+        window.deletePortuguese = function(id) {
+            appData.portuguese = appData.portuguese.filter(x => x.id !== id);
+            saveData();
+            renderAccordion();
+        }
+
+
+        // === CRONÔMETRO ===
+        let swTimer = null;
+        let swSeconds = 0;
+
+        const swTips = {
+            proc_civil: "Foque nos prazos e ritos procedimentais. CPC é cobrado na literalidade.",
+            proc_penal: "Atenção especial aos prazos, competências e procedimentos do Júri.",
+            penal: "Memorize as penas (reclusão x detenção) e verbos dos crimes contra a Administração.",
+            const: "Art. 5º despenca! Leia com atenção aos incisos e diferenças dos remédios constitucionais.",
+            admin: "Decore os prazos do Estatuto (dias) e as tipologias de sanções da LIA.",
+            epd: "Concentre-se nos conceitos de acessibilidade, barreiras e princípios gerais do Estatuto.",
+            leg_esp: "Leitura seca! Destaque prazos em dias (úteis vs corridos) nas Normas.",
+            port: "Interpretação e coesão lideram. Resolva 1 prova Vunesp inteira por sessão!",
+            info: "Decore atalhos de teclado e caminhos de menu do Word, Excel e Windows.",
+            rlm: "Treino exaustivo de questões. Cuidado com negação de proposições compostas."
+        };
+
+        function updateStopwatchTip() {
+            const select = document.getElementById('sw-subject');
+            const tipDiv = document.getElementById('sw-tip');
+            const accDiv = document.getElementById('sw-accumulated');
+            const subId = select.value;
+            
+            if (subId && swTips[subId]) {
+                tipDiv.innerHTML = `<span class="text-tjsp-bordo font-bold mr-1">Dica:</span> ${swTips[subId]}`;
+                const accSecs = appData.timeSpent[subId] || 0;
+                const h = Math.floor(accSecs / 3600);
+                const m = Math.floor((accSecs % 3600) / 60);
+                accDiv.textContent = `Tempo total: ${h}h ${m}m`;
+            } else {
+                tipDiv.innerHTML = 'Selecione uma disciplina para ver a dica estratégica.';
+                accDiv.textContent = 'Tempo total: 0h 0m';
+            }
+        }
+
+        function startStopwatch() {
+            const select = document.getElementById('sw-subject');
+            if (!select.value) {
+                const tipDiv = document.getElementById('sw-tip');
+                tipDiv.innerHTML = `<span class="text-red-600 font-bold">Selecione uma disciplina primeiro!</span>`;
+                return;
+            }
+            if (!swTimer) {
+                swTimer = setInterval(() => {
+                    swSeconds++;
+                    updateStopwatchDisplay();
+                }, 1000);
+                document.getElementById('btn-sw-start').classList.add('hidden');
+                document.getElementById('btn-sw-pause').classList.remove('hidden');
+                select.disabled = true; // Bloqueia a troca enquanto roda
+            }
+        }
+
+        function pauseStopwatch() {
+            if (swTimer) {
+                clearInterval(swTimer);
+                swTimer = null;
+                document.getElementById('btn-sw-pause').classList.add('hidden');
+                document.getElementById('btn-sw-start').classList.remove('hidden');
+                document.getElementById('btn-sw-start').textContent = "Continuar";
+            }
+        }
+
+        function endStopwatch() {
+            const select = document.getElementById('sw-subject');
+            const subId = select.value;
+            
+            if (swTimer) {
+                clearInterval(swTimer);
+                swTimer = null;
+            }
+            
+            if (subId && swSeconds > 0) {
+                if (!appData.timeSpent[subId]) appData.timeSpent[subId] = 0;
+                appData.timeSpent[subId] += swSeconds;
+                saveData();
+            }
+
+            // Reseta a UI
+            swSeconds = 0;
+            updateStopwatchDisplay();
+            select.disabled = false;
+            
+            const btnStart = document.getElementById('btn-sw-start');
+            btnStart.classList.remove('hidden');
+            btnStart.textContent = "Iniciar";
+            document.getElementById('btn-sw-pause').classList.add('hidden');
+            
+            updateStopwatchTip(); // Atualiza o display acumulado
+        }
+
+        function updateStopwatchDisplay() {
+            const h = String(Math.floor(swSeconds / 3600)).padStart(2, '0');
+            const m = String(Math.floor((swSeconds % 3600) / 60)).padStart(2, '0');
+            const s = String(swSeconds % 60).padStart(2, '0');
+            document.getElementById('stopwatch-display').textContent = `${h}:${m}:${s}`;
+        }
+
+
+        // === EXPORTAÇÃO (CADERNO DE VÉSPERA) ===
+        function openExportModal() {
+            const modal = document.getElementById('export-modal');
+            const content = document.getElementById('export-content');
+            content.innerHTML = '';
+            
+            let hasContent = false;
+
+            subjects.forEach(sub => {
+                if (sub.type === 'special') return;
+                
+                let subHtml = `<div class="mb-8">`;
+                subHtml += `<h3 class="text-xl font-bold text-tjsp-bordo border-b border-gray-200 pb-2 mb-4 uppercase tracking-wider">${sub.title}</h3>`;
+                
+                let hasNotesInSub = false;
+                
+                sub.items.forEach((itemText, idx) => {
+                    const s = appData.checklist[sub.id][idx].s;
+                    if (s && s.trim().length > 0) {
+                        hasContent = true;
+                        hasNotesInSub = true;
+                        subHtml += `
+                            <div class="mb-4">
+                                <h4 class="font-bold text-gray-800 text-sm mb-1">${itemText}</h4>
+                                <div class="bg-amber-50/50 p-3 rounded-r border-l-4 border-amber-300 text-sm whitespace-pre-wrap">${s}</div>
+                            </div>
+                        `;
+                    }
+                });
+                
+                subHtml += `</div>`;
+                if (hasNotesInSub) {
+                    content.innerHTML += subHtml;
+                }
+            });
+
+            if (!hasContent) {
+                content.innerHTML = `<div class="text-center text-gray-500 py-12"><i class="fa-solid fa-folder-open text-4xl mb-4 opacity-30"></i><br>Nenhum resumo encontrado. Use o botão "Resumo" nas matérias para criar seu Caderno de Véspera.</div>`;
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeExportModal() {
+            document.getElementById('export-modal').classList.add('hidden');
+        }
+
+        // Boot
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
